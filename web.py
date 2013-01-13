@@ -2,13 +2,17 @@ import bottle
 from Corellia.RedisQueue import Client, ResultAlreadyExpired, ResultNotReady
 import yajl as json
 
+from sys import argv
+host, port = argv[1:3]
+port = int(port)
+
 @bottle.post("/<path:path>")
 def push_task(path):
     try:
         queue, method = path.split("/")
     except:
         return None
-    c = Client("localhost", 6379, queue, async=True, pickler=json)
+    c = Client(host, port, queue, async=True, pickler=json)
     args = bottle.request.json
     args = [args] if not isinstance(args, list) else args
     key = getattr(c, method)(*args)
@@ -20,7 +24,7 @@ def get_result(path):
         queue, _, key = path.split("/")
     except:
         return None
-    c = Client("localhost", 6379, queue, async=True, pickler=json)
+    c = Client(host, port, queue, async=True, pickler=json)
     try:
         result = c.fetch_result(key)
         result = "ResultNotReady" if isinstance(result, ResultNotReady) else result
