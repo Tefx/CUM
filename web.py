@@ -18,7 +18,7 @@ def push_task(path):
         return None
     args = bottle.request.json
     args = [args] if not isinstance(args, list) else args
-    tq.call(url, method, args, async=True)
+    tq.call(queue, method, args, async=True)
     key = getattr(c, method)(*args)
     bottle.response.set_header("key", key)
 

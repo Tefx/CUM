@@ -87,7 +87,7 @@ def test_http(i):
     print "end", i
 
 let = []
-for i in xrange(20):
+for i in xrange(1):
   let.append(gevent.spawn(test_http, i))
 gevent.joinall(let)
 
