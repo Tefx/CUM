@@ -6,13 +6,14 @@ from sys import argv
 host, port = argv[1:3]
 port = int(port)
 
+c = Client(host, port, queue, async=True, pickler=json)
+
 @bottle.post("/<path:path>")
 def push_task(path):
     try:
         queue, method = path.split("/")
     except:
         return None
-    c = Client(host, port, queue, async=True, pickler=json)
     args = bottle.request.json
     args = [args] if not isinstance(args, list) else args
     key = getattr(c, method)(*args)
@@ -34,6 +35,6 @@ def get_result(path):
     return json.dumps(result)
 
 if __name__ == '__main__':
-    bottle.run(host='0.0.0.0')
+    bottle.run(server='auto', host='0.0.0.0')
 
 

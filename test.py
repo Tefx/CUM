@@ -1,9 +1,9 @@
-# from gevent import monkey; monkey.patch_all()
-# from Corellia.RedisQueue import Client
+from gevent import monkey; monkey.patch_all()
+from Corellia.RedisQueue import Client
 # import time
-import json as json
+import yajl as json
 
-# c = Client("192.168.70.150", 6379, "CUM", pickler=json)
+c = Client("192.168.70.150", 6379, "CUM", pickler=json)
 
 # g = {
 #     "a" : 1,
@@ -26,10 +26,10 @@ import json as json
 # print c.fetch_result(v)
 
 s = {
-  "P"                   : [0.42, 0.43]*5000,
-  "V"                   : [25, 25]*5000,
-  "T"                   : [1, 1.3]*5000,
-  "M"                   : [0.5036, 0.478]*5000,
+  "P"                   : [0.42, 0.43]*10,
+  "V"                   : [25, 25]*10,
+  "T"                   : [1, 1.3]*10,
+  "M"                   : [0.5036, 0.478]*10,
   "W"                   : ["!", "mode0", "#P", "#V", "#T", "#M"],
   "MPE"                 : 0.0002,
   "K"                   : 1.732,
@@ -66,32 +66,38 @@ s = {
   "_U"                  : ["!", "modef", "#Urels", "#W", "K6" ]
 }
 
-# import requests
+import requests
+import gevent
 # import timeit
 
 # print json.loads(s)
 
-# def test_http():
-#     baseurl = "http://localhost:8080/"
-#     r = requests.post(baseurl+"CUM/eval", data=s, headers={'content-type': 'application/json'})
-#     result_url = baseurl + "CUM/eval/" + r.headers["key"]
-#     print result_url
-#     while True:
-#         r = requests.get(result_url)
-#         print r
-#         if r.json:
-#             print r.json
-#             break
-#         time.sleep(0.2)
+s = json.dumps(s)
 
-# test_http()
-# import gevent
+def test_http(i):
+    print "start", i
+    baseurl = "http://192.168.70.144:8080/"
+    r = requests.post(baseurl+"CUM/eval", data=s, headers={'content-type': 'application/json'})
+    result_url = baseurl + "CUM/eval/" + r.headers["key"]
+    while True:
+        r = requests.get(result_url)
+        if r.json:
+            break
+        gevent.sleep(0.2)
+    print "end", i
 
-# def sync_call():
-#   let = []
-#   for i in xrange(10):
-#     let.append(gevent.spawn(lambda s:c.eval(s), s))
-#   gevent.joinall(let)
+let = []
+for i in xrange(20):
+  let.append(gevent.spawn(test_http, i))
+gevent.joinall(let)
+
+def sync_call():
+  let = []
+  # c = Client("localhost", 6379, "CUM", pickler=json)
+  for i in xrange(10):
+    # c.eval(s)
+    let.append(gevent.spawn(lambda s:c.eval(s), s))
+  gevent.joinall(let)
 
 # t = timeit.Timer("sync_call()", "from __main__ import sync_call")
 # print t.repeat(1, 1)
@@ -100,18 +106,18 @@ s = {
 
 # print c.eval(s)
 
-from worker import Worker
-w = Worker("CUM_Mod_Library")
+# from worker import Worker
+# w = Worker("CUM_Mod_Library")
 
-s = json.loads(json.dumps(s))
+# s = json.loads(json.dumps(s))
 
-def mt():
-  for _ in xrange(2):
-    w.eval(s)
+# def mt():
+#   for _ in xrange(2):
+#     w.eval(s)
 
-mt()
-# import profile
-# profile.run("mt()", "prof.txt")
+# mt()
+# import cProfile as profile
+# profile.run("c.eval(s)", "prof.txt")
 # import pstats
 # p = pstats.Stats("prof.txt")
 # p.sort_stats("cumulative").print_stats()
