@@ -28,7 +28,7 @@ def get_result(path):
         queue, _, key = path.split("/")
     except:
         return None
-    c = Client(host, port, queue, async=True, pickler=json)
+    # c = Client(host, port, queue, async=True, pickler=json)
     try:
         result = tq.fetch_async_result(key)
         result = "ResultNotReady" if isinstance(result, ResultNotReady) else result

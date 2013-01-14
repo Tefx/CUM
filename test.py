@@ -26,10 +26,10 @@ c = Client("192.168.70.150", 6379, "CUM", pickler=json)
 # print c.fetch_result(v)
 
 s = {
-  "P"                   : [0.42, 0.43]*10,
-  "V"                   : [25, 25]*10,
-  "T"                   : [1, 1.3]*10,
-  "M"                   : [0.5036, 0.478]*10,
+  "P"                   : [0.42, 0.43]*100,
+  "V"                   : [25, 25]*100,
+  "T"                   : [1, 1.3]*100,
+  "M"                   : [0.5036, 0.478]*100,
   "W"                   : ["!", "mode0", "#P", "#V", "#T", "#M"],
   "MPE"                 : 0.0002,
   "K"                   : 1.732,
@@ -76,7 +76,7 @@ s = json.dumps(s)
 
 def test_http(i):
     print "start", i
-    baseurl = "http://192.168.70.144:8080/"
+    baseurl = "http://localhost:8080/"
     r = requests.post(baseurl+"CUM/eval", data=s, headers={'content-type': 'application/json'})
     result_url = baseurl + "CUM/eval/" + r.headers["key"]
     while True:
@@ -87,17 +87,17 @@ def test_http(i):
     print "end", i
 
 let = []
-for i in xrange(1):
+for i in xrange(500):
   let.append(gevent.spawn(test_http, i))
 gevent.joinall(let)
 
-def sync_call():
-  let = []
-  # c = Client("localhost", 6379, "CUM", pickler=json)
-  for i in xrange(10):
-    # c.eval(s)
-    let.append(gevent.spawn(lambda s:c.eval(s), s))
-  gevent.joinall(let)
+# def sync_call():
+#   let = []
+#   # c = Client("localhost", 6379, "CUM", pickler=json)
+#   for i in xrange(10):
+#     # c.eval(s)
+#     let.append(gevent.spawn(lambda s:c.eval(s), s))
+#   gevent.joinall(let)
 
 # t = timeit.Timer("sync_call()", "from __main__ import sync_call")
 # print t.repeat(1, 1)
