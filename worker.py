@@ -5,12 +5,12 @@ class Worker(object):
         self.mods = export(mod_path)
 
     def eval(self, env):
-        # env = json.loads(env)
+        env = json.loads(env)
         res = {}
         for k in env.iterkeys():
             if k[0] == "_":
                 res[k] = self.cal(k, env)
-        return res
+        return json.dumps(res)
 
     def cal(self, name, env):
         var = env[name]
@@ -85,10 +85,15 @@ class Worker(object):
 
 if __name__ == '__main__':
     from sys import argv
-    import json as json
+    import yajl as json
     from Corellia.RedisQueue import Worker as CorellianWorker
-    host, port, mod_path = argv[1:4]
-    port = int(port)
+    addr, mod_path = argv[1:3]
+    if ":" in addr:
+        host, port = addr.split(":")
+        port = int(port)
+    else:
+        host = addr
+        port = 6379
     queue_name = "CUM"
     CorellianWorker(host, port, queue_name, json).run(Worker, mod_path)
 

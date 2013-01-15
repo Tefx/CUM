@@ -3,7 +3,7 @@ from Corellia.RedisQueue import Client
 # import time
 import yajl as json
 
-c = Client("192.168.70.150", 6379, "CUM", pickler=json)
+# c = Client("192.168.70.144", 6379, "CUM", pickler=json)
 
 # g = {
 #     "a" : 1,
@@ -26,10 +26,10 @@ c = Client("192.168.70.150", 6379, "CUM", pickler=json)
 # print c.fetch_result(v)
 
 s = {
-  "P"                   : [0.42, 0.43]*100,
-  "V"                   : [25, 25]*100,
-  "T"                   : [1, 1.3]*100,
-  "M"                   : [0.5036, 0.478]*100,
+  "P"                   : [0.42, 0.43]*20,
+  "V"                   : [25, 25]*20,
+  "T"                   : [1, 1.3]*20,
+  "M"                   : [0.5036, 0.478]*20,
   "W"                   : ["!", "mode0", "#P", "#V", "#T", "#M"],
   "MPE"                 : 0.0002,
   "K"                   : 1.732,
@@ -72,10 +72,13 @@ import gevent
 
 # print json.loads(s)
 
+import snappy
+
 s = json.dumps(s)
+# s = snappy.compress(s)
 
 def test_http(i):
-    print "start", i
+    # print "start", i
     baseurl = "http://localhost:8080/"
     r = requests.post(baseurl+"CUM/eval", data=s, headers={'content-type': 'application/json'})
     result_url = baseurl + "CUM/eval/" + r.headers["key"]
@@ -83,28 +86,34 @@ def test_http(i):
         r = requests.get(result_url)
         if r.json:
             break
-        gevent.sleep(0.2)
-    print "end", i
+        gevent.sleep(0.01)
+    # print i#, r.json
 
 let = []
-for i in xrange(500):
+for i in xrange(100):
   let.append(gevent.spawn(test_http, i))
 gevent.joinall(let)
 
-# def sync_call():
-#   let = []
-#   # c = Client("localhost", 6379, "CUM", pickler=json)
-#   for i in xrange(10):
-#     # c.eval(s)
-#     let.append(gevent.spawn(lambda s:c.eval(s), s))
-#   gevent.joinall(let)
+
+
+# test_http(0)
+# print repr(s)
+# s = snappy.compress(s)
+# print repr(s)
+
+
+def sync_call():
+  let = []
+  c = Client("localhost", 6379, "CUM", pickler=json)
+  for i in xrange(200):
+    # c.eval(s)
+    let.append(gevent.spawn(lambda s:c.eval(s), s))
+  gevent.joinall(let)
 
 # t = timeit.Timer("sync_call()", "from __main__ import sync_call")
 # print t.repeat(1, 1)
 
 # sync_call()
-
-# print c.eval(s)
 
 # from worker import Worker
 # w = Worker("CUM_Mod_Library")
@@ -117,7 +126,7 @@ gevent.joinall(let)
 
 # mt()
 # import cProfile as profile
-# profile.run("c.eval(s)", "prof.txt")
+# profile.run("test_http(0)", "prof.txt")
 # import pstats
 # p = pstats.Stats("prof.txt")
 # p.sort_stats("cumulative").print_stats()
