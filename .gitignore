@@ -39,3 +39,6 @@ nosetests.xml
 CUM_Mod_Library/
 
 prof.txt
+
+test/
+web/

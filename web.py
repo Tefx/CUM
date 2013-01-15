@@ -14,14 +14,15 @@ else:
     port = 6379
 port = int(port)
 
+app = bottle.Bottle()
 
 tq = TaskQueue(host, port, pickler=json)
 
-@bottle.get("/")
+@app.get("/")
 def hello():
     return u"词句已成血肉"
 
-@bottle.post("/<path:path>")
+@app.post("/<path:path>")
 def push_task(path):
     try:
         queue, method = path.split("/")
@@ -31,7 +32,7 @@ def push_task(path):
     key = tq.call(queue, method, [args], async=True)
     bottle.response.set_header("key", key)
 
-@bottle.get("/<path:path>")
+@app.get("/<path:path>")
 def get_result(path):
     try:
         queue, _, key = path.split("/")
@@ -45,6 +46,6 @@ def get_result(path):
     return result
 
 if __name__ == '__main__':
-    bottle.run(server='tornado', host='0.0.0.0')
+    bottle.run(app, server='tornado', host='0.0.0.0')
 
 
