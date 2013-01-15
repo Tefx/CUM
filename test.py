@@ -79,7 +79,7 @@ s = json.dumps(s)
 
 def test_http(i):
     # print "start", i
-    baseurl = "http://localhost:8080/"
+    baseurl = "http://192.168.70.144:8080/"
     r = requests.post(baseurl+"CUM/eval", data=s, headers={'content-type': 'application/json'})
     result_url = baseurl + "CUM/eval/" + r.headers["key"]
     print i, result_url
@@ -118,11 +118,11 @@ def sync_call(n):
   gevent.joinall(let)
 
 
-t = timeit.Timer("test_http_n(1)", "from __main__ import test_http_n")
+t = timeit.Timer("test_http_n(50)", "from __main__ import test_http_n")
 print t.repeat(1, 1)
 
-# t = timeit.Timer("sync_call(100)", "from __main__ import sync_call")
-# print t.repeat(1, 1)
+t = timeit.Timer("sync_call(50)", "from __main__ import sync_call")
+print t.repeat(1, 1)
 
 # from worker import Worker
 # w = Worker("CUM_Mod_Library")

@@ -3,6 +3,7 @@
 import bottle
 from Corellia.RedisQueue import TaskQueue, ResultAlreadyExpired, ResultNotReady
 import yajl as json
+from eurasia.web import wsgiserver, mainloop
 
 from sys import argv
 addr = argv[1]
@@ -46,6 +47,9 @@ def get_result(path):
     return result
 
 if __name__ == '__main__':
-    bottle.run(app, server='tornado', host='0.0.0.0')
+    # bottle.run(app, server='tornado', host='0.0.0.0')
+    httpd = wsgiserver(':8080', app)
+    httpd.start()
+    mainloop()
 
 
