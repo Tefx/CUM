@@ -1,5 +1,3 @@
-#coding:utf-8
-
 import bottle
 from Corellia.RedisQueue import TaskQueue, ResultAlreadyExpired, ResultNotReady
 import yajl as json
@@ -20,7 +18,7 @@ tq = TaskQueue(host, port, pickler=json)
 
 @app.get("/")
 def hello():
-    return u"词句已成血肉"
+    return "verbum caro factum est"
 
 @app.post("/<path:path>")
 def push_task(path):

@@ -26,10 +26,10 @@ import yajl as json
 # print c.fetch_result(v)
 
 s = {
-  "P"                   : [0.42, 0.43]*10,
-  "V"                   : [25, 25]*10,
-  "T"                   : [1, 1.3]*10,
-  "M"                   : [0.5036, 0.478]*10,
+  "P"                   : [0.42, 0.43]*50,
+  "V"                   : [25, 25]*50,
+  "T"                   : [1, 1.3]*50,
+  "M"                   : [0.5036, 0.478]*50,
   "W"                   : ["!", "mode0", "#P", "#V", "#T", "#M"],
   "MPE"                 : 0.0002,
   "K"                   : 1.732,
@@ -77,24 +77,22 @@ import timeit
 s = json.dumps(s)
 # s = snappy.compress(s)
 
+
+# urls = ["http://192.168.70.144:8080/", "http://192.168.70.153:8080/"]
 def test_http(i):
     # print "start", i
     baseurl = "http://192.168.70.144:8080/"
-    r = requests.post(baseurl+"CUM/eval", data=s, headers={'content-type': 'application/json'})
+    # baseurl = urls[i%2]
+    r = requests.post(baseurl+"CUM/eval", data=s)
     result_url = baseurl + "CUM/eval/" + r.headers["key"]
-    print i, result_url
     while True:
         r = requests.get(result_url)
         if r.text == "ResultAlreadyExpired":
-            # print i, "ResultAlreadyExpired"
             break
         elif r.text == "ResultNotReady":
-            # print i, "ResultNotReady"
             gevent.sleep(0.01)
         else:
-            # print i, r.text
             break
-    print i, r.text
 
 def test_http_n(n):
   let = []
@@ -112,16 +110,16 @@ def test_http_n(n):
 
 def sync_call(n):
   let = []
-  c = Client("192.168.70.144", 6379, "CUM", pickler=json)
+  c = Client("192.168.70.150", 6379, "CUM", pickler=json)
   for i in xrange(n):
     let.append(gevent.spawn(lambda s:c.eval(s), s))
   gevent.joinall(let)
 
 
-t = timeit.Timer("test_http_n(50)", "from __main__ import test_http_n")
+t = timeit.Timer("test_http_n(200)", "from __main__ import test_http_n")
 print t.repeat(1, 1)
 
-t = timeit.Timer("sync_call(50)", "from __main__ import sync_call")
+t = timeit.Timer("sync_call(200)", "from __main__ import sync_call")
 print t.repeat(1, 1)
 
 # from worker import Worker
