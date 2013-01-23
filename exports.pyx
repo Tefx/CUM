@@ -1,9 +1,13 @@
 import os,sys
 
 
-def export(path):
-    exports = {}
-    len_pre = len(path)
+cpdef export(str path):
+    cdef dict exports = {}
+    cdef int len_pre = len(path)
+    cdef str basename
+    cdef mod
+    cdef str name
+    cdef mods
     for root, _, files in os.walk(path):
         sys.path.insert(0, root)
         for f_name in files:
@@ -18,9 +22,5 @@ def export(path):
                 exports.update(mods)
         del sys.path[0]
     return exports
-
-
-if __name__ == '__main__':
-    print export("mod_lib")
 
 

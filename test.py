@@ -1,35 +1,18 @@
 from gevent import monkey; monkey.patch_all()
-from Corellia.RedisQueue import Client
-# import time
-import yajl as json
-
-# c = Client("192.168.70.144", 6379, "CUM", pickler=json)
-
-# g = {
-#     "a" : 1,
-#     "b" : 2,
-#     "c" : 3,
-#     "d" : 4,
-#     "e" : ["!", "test.m1", "a", "b"],
-#     "f" : ["!", "test.m2", "e"],
-#     "g" : ["!", "test.m3", "b", "c", "f"],
-#     "h" : [1, 3, 5, 7],
-#     "i" : [1, 2, 3, 4],
-#     "_u": ["!", "test.m4", "h", "#i", "g"]
-#     }
-
-
-# v = c.eval(g)
-# print v
-# # print c.fetch_result(v)
-# time.sleep(2)
-# print c.fetch_result(v)
-
+from Corellia.client import Client
+import ujson
+import requests
+import gevent
+import timeit
+from gevent.pool import Pool
+pool = Pool(1000)
+import threading
+import time
 s = {
-  "P"                   : [0.42, 0.43]*50,
-  "V"                   : [25, 25]*50,
-  "T"                   : [1, 1.3]*50,
-  "M"                   : [0.5036, 0.478]*50,
+  "P"                   : [0.42, 0.43],
+  "V"                   : [25, 25],
+  "T"                   : [1, 1.3],
+  "M"                   : [0.5036, 0.478],
   "W"                   : ["!", "mode0", "#P", "#V", "#T", "#M"],
   "MPE"                 : 0.0002,
   "K"                   : 1.732,
@@ -66,77 +49,76 @@ s = {
   "_U"                  : ["!", "modef", "#Urels", "#W", "K6" ]
 }
 
-import requests
-import gevent
-import timeit
+import urllib2
+import urllib
 
-# # print json.loads(s)
+s = ujson.dumps(s)
 
-# import snappy
-
-s = json.dumps(s)
-# s = snappy.compress(s)
-
-
-# urls = ["http://192.168.70.144:8080/", "http://192.168.70.153:8080/"]
 def test_http(i):
-    # print "start", i
-    baseurl = "http://192.168.70.144:8080/"
-    # baseurl = urls[i%2]
-    r = requests.post(baseurl+"CUM/eval", data=s)
-    result_url = baseurl + "CUM/eval/" + r.headers["key"]
-    while True:
-        r = requests.get(result_url)
-        if r.text == "ResultAlreadyExpired":
-            break
-        elif r.text == "ResultNotReady":
-            gevent.sleep(0.01)
-        else:
-            break
-
-def test_http_n(n):
-  let = []
-  for i in xrange(n):
-    let.append(gevent.spawn(test_http, i))
-  gevent.joinall(let)
-
-
+    baseurl = "http://localhost:8080/"
+    r = urllib2.Request(baseurl+"CUM/eval", s, headers={"Content-Type":"application/json"})
+    try:
+      key = urllib2.urlopen(r).headers["key"]
+      result_url = baseurl + "CUM/" + key
+      # print result_url
+      while True:
+          result = urllib2.urlopen(result_url).read()
+          if result == "ResultNotReadyOrExpired":
+              time.sleep(0.01)
+          else:
+              # print result
+              break
+    except:
+      pass
 
 # test_http(0)
-# print repr(s)
-# s = snappy.compress(s)
-# print repr(s)
 
+def test_http_n(n):
+  ts = [threading.Thread(target=test_http, args=(i,)) for i in xrange(n)]
+  # for t in ts:
+  #   t.start()
+  # for t in ts:
+  #   t.join()
+  pool.map(test_http, xrange(n))
+
+c = Client("localhost", "CUM", pickler=ujson, serialize=True, interval=0.1)
+
+def test_pt(n):
+  for i in xrange(n):
+    c.put_task("eval", (s,), str(i))
+  c.finish()
+
+def test_gr(n):
+  pool.map(lambda i:c.get_result(str(i)), xrange(n))
 
 def sync_call(n):
-  let = []
-  c = Client("192.168.70.150", 6379, "CUM", pickler=json)
-  for i in xrange(n):
-    let.append(gevent.spawn(lambda s:c.eval(s), s))
-  gevent.joinall(let)
+  # ts = [threading.Thread(target=c.eval, args=(s,)) for _ in xrange(n)]
+  # for t in ts:
+  #   t.start()
+  # for t in ts:
+  #   t.join()
+  pool.map(lambda _:c.eval(s), xrange(n))
 
 
-t = timeit.Timer("test_http_n(200)", "from __main__ import test_http_n")
+# print c.eval(s)
+
+t = timeit.Timer("test_http_n(1000)", "from __main__ import test_http_n")
 print t.repeat(1, 1)
 
-t = timeit.Timer("sync_call(200)", "from __main__ import sync_call")
-print t.repeat(1, 1)
+# t = timeit.Timer("test_pt(1000)", "from __main__ import test_pt")
+# print t.repeat(1, 1)
 
-# from worker import Worker
-# w = Worker("CUM_Mod_Library")
+# t = timeit.Timer("test_gr(1)", "from __main__ import test_gr")
+# print t.repeat(1, 1)
 
-# s = json.loads(json.dumps(s))
+# t = timeit.Timer("sync_call(1000)", "from __main__ import sync_call")
+# print t.repeat(10, 1)
 
-# def mt():
-#   for _ in xrange(2):
-#     w.eval(s)
-
-# mt()
 # import cProfile as profile
-# profile.run("test_http(0)", "prof.txt")
+# profile.run("test_http_n(100)", "prof.txt")
 # import pstats
 # p = pstats.Stats("prof.txt")
-# p.sort_stats("cumulative").print_stats()
+# p.sort_stats("cumulative").print_stats() 
 
 
 
